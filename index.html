@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Trigo Reference – Finger Magic</title>
+
+<style>
+/* ===== GLOBAL ===== */
+body{
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #0f2a35, #081a22 60%);
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding-top:24px;
+  margin:0;
+  min-height:100vh;
+}
+
+/* ===== CARD ===== */
+.app{
+  width:380px;
+  border-radius:18px;
+  overflow:hidden;
+  background:linear-gradient(180deg, rgba(15,42,53,.95), rgba(8,26,34,.95));
+  box-shadow:0 20px 40px rgba(0,0,0,.55);
+}
+
+/* ===== HEADER ===== */
+.top-banner{
+  height:110px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  background:radial-gradient(
+    ellipse at center,
+    #0d4a73 0%,
+    #08324f 45%,
+    #041a2a 75%,
+    #020e18 100%
+  );
+}
+
+.top-banner h1{
+  margin:0;
+  font-size:1.45em;
+  letter-spacing:.15em;
+}
+
+.top-banner p{
+  margin:6px 0 0;
+  font-size:.9em;
+  opacity:.85;
+  color:#d6ecff;
+}
+
+/* ===== CONTENT ===== */
+.content{
+  padding:26px 30px 14px;
+  text-align:center;
+}
+
+/* ===== MODE ===== */
+.mode{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.mode button{
+  background:rgba(255,255,255,.08);
+  color:#e6f7ff;
+  padding:6px 14px;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+}
+
+.mode button.active{
+  background:#00c6ff;
+  color:#00161f;
+  font-weight:600;
+}
+
+/* ===== QUESTION ===== */
+.question{
+  font-size:1.9em;
+  margin:18px 0 20px;
+}
+
+/* ===== INPUT ===== */
+.input-box{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:1.4em;
+  margin-bottom:18px;
+}
+
+.input-box input{
+  width:55px;
+  text-align:center;
+  font-size:1.1em;
+  margin:0 6px;
+  padding:6px;
+  border:none;
+  border-radius:8px;
+}
+
+/* ===== BUTTON ===== */
+button.action{
+  background:linear-gradient(180deg,#00d4ff,#00b3e6);
+  color:#00202b;
+  border:none;
+  padding:11px 22px;
+  border-radius:10px;
+  font-size:1em;
+  cursor:pointer;
+}
+
+/* ===== RESULT ===== */
+.result{
+  margin-top:16px;
+  min-height:44px;
+}
+
+.correct{ color:#7CFC00; font-weight:600; }
+.wrong{ color:#ff7a7a; font-weight:600; }
+.answer{ font-size:.95em; opacity:.9; margin-top:4px; }
+
+/* ===== FOOTER ===== */
+.footer{
+  text-align:center;
+  font-size:10px;
+  opacity:.45;
+  letter-spacing:1.5px;
+  margin:8px 0 10px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="top-banner">
+    <h1>TRIGO MENTAL MATHS</h1>
+    <p>Finger Magic • Special Reference Angles</p>
+  </div>
+
+  <div class="content">
+
+    <div class="mode">
+      <button class="active" onclick="setMode('sin',this)">sin</button>
+      <button onclick="setMode('cos',this)">cos</button>
+      <button onclick="setMode('tan',this)">tan</button>
+      <button onclick="setMode('all',this)">all</button>
+    </div>
+
+    <div class="question" id="question"></div>
+
+    <!-- sin / cos -->
+    <div class="input-box" id="scBox">
+      √ <input type="number" id="scInput" min="0" max="4"> / 2
+    </div>
+
+    <!-- tan -->
+    <div class="input-box" id="tanBox" style="display:none;">
+      √ <input type="number" id="tanTop" min="0" max="4">
+      /
+      √ <input type="number" id="tanBottom" min="0" max="4">
+    </div>
+
+    <button class="action" onclick="checkAnswer()">Check</button>
+
+    <div class="result" id="result"></div>
+
+    <button class="action" onclick="newQuestion()" style="margin-top:14px;">
+      Next Question
+    </button>
+
+  </div>
+
+  <div class="footer">© Hulagpos DOST Review 2026</div>
+</div>
+
+<script>
+/* ===== DATA ===== */
+const sinMap = {0:0,30:1,45:2,60:3,90:4};
+const cosMap = {0:4,30:3,45:2,60:1,90:0};
+
+const angles=[0,30,45,60,90];
+const modes=["sin","cos","tan"];
+
+let selectedMode="sin";
+let currentMode="sin";
+let currentAngle=30;
+
+/* ===== SIMPLIFY ===== */
+function simplifySinCos(n){
+  if(n===0) return "0";
+  if(n===1) return "1/2";
+  if(n===4) return "1";
+  return `√${n} / 2`;
+}
+
+function simplifyTan(top,bottom){
+  if(bottom===0) return "undefined";
+  if(top===0) return "0";
+  if(top===bottom) return "1";
+  if(top===1 && bottom===3) return "√3 / 3";
+  return `√${top} / √${bottom}`;
+}
+
+/* ===== MODE ===== */
+function setMode(m,btn){
+  selectedMode=m;
+  document.querySelectorAll(".mode button")
+    .forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  newQuestion();
+}
+
+/* ===== NEW QUESTION ===== */
+function newQuestion(){
+  currentAngle=angles[Math.floor(Math.random()*angles.length)];
+  currentMode = selectedMode==="all"
+    ? modes[Math.floor(Math.random()*modes.length)]
+    : selectedMode;
+
+  document.getElementById("question").innerText =
+    `${currentMode} ${currentAngle}°`;
+
+  document.getElementById("result").innerHTML="";
+  document.getElementById("scInput").value="";
+  document.getElementById("tanTop").value="";
+  document.getElementById("tanBottom").value="";
+
+  document.getElementById("scBox").style.display =
+    currentMode==="tan" ? "none":"flex";
+  document.getElementById("tanBox").style.display =
+    currentMode==="tan" ? "flex":"none";
+}
+
+/* ===== CHECK ===== */
+function checkAnswer(){
+  const res=document.getElementById("result");
+
+  if(currentMode==="tan"){
+    const top=parseInt(tanTop.value);
+    const bottom=parseInt(tanBottom.value);
+    const ct=sinMap[currentAngle];
+    const cb=cosMap[currentAngle];
+
+    res.innerHTML =
+      (top===ct && bottom===cb)
+      ? `<div class="correct">✅ Correct</div>
+         <div class="answer">tan ${currentAngle}° = ${simplifyTan(ct,cb)}</div>`
+      : `<div class="wrong">❌ Incorrect</div>
+         <div class="answer">tan ${currentAngle}° = ${simplifyTan(ct,cb)}</div>`;
+    return;
+  }
+
+  const user=parseInt(scInput.value);
+  if(isNaN(user)){
+    res.innerHTML=`<div class="wrong">Enter a value</div>`;
+    return;
+  }
+
+  const map=currentMode==="sin"?sinMap:cosMap;
+  const correct=map[currentAngle];
+
+  res.innerHTML =
+    user===correct
+    ? `<div class="correct">✅ Correct</div>
+       <div class="answer">${currentMode} ${currentAngle}° = ${simplifySinCos(correct)}</div>`
+    : `<div class="wrong">❌ Incorrect</div>
+       <div class="answer">${currentMode} ${currentAngle}° = ${simplifySinCos(correct)}</div>`;
+}
+
+newQuestion();
+</script>
+</body>
+</html>
